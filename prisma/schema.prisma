@@ -8,106 +8,153 @@ datasource db {
 }
 
 model User {
-  id        Int         @id @default(autoincrement())
-  name      String
-  email     String      @unique
-  password  String
-  role      Role        @default(USER)
-  profile   Profile?
-  questPet QuestPet?
-  streakPet StreakPet?
-  diary Diary?
-  pet Pet?
-  mentalData MentalData?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  
-}
-
-model MentalData {
-  id Int @id  @default(autoincrement())
-  mood String?
-  userId Int @unique
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             Int            @id @default(autoincrement())
+  name           String
+  email          String         @unique
+  password       String
+  role           Role           @default(USER)
+  profile        Profile?
+  pet            Pet?
+  dailyQuests    DailyQuest[]
+  streaks        Streak[]
+  moods          Mood[]
+  diaries        Diary[]
+  questionnaire  Questionnaire?
+  whatsappNumber String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
 
 model Profile {
   id        Int      @id @default(autoincrement())
+  avatar    String?  @default("default-avatar.png")
   bio       String?  @db.Text
-  avatar    String?
-  phoneNumber Int
-  age Int
-  wakeupTime String
-  sleepTime String
-  hobby String?
-  questionerData QuestionerData?
+  age       Int?
+  gender    String?
   userId    Int      @unique
   user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model QuestionerData {
-  id        Int      @id @default(autoincrement())
-  activities String?
-  ProfileID Int @unique
-  Profile      Profile     @relation(fields: [ProfileID], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Pet {
-  id Int @id  @default(autoincrement())
-  name String?
-  moodPet String?
-  userId Int @unique
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             Int              @id @default(autoincrement())
+  name           String           @default("SolvanaPet")
+  stage          PetStage         @default(EGG)
+  happiness      Int              @default(50)
+  energy         Int              @default(100)
+  level          Int              @default(1)
+  exp            Int              @default(0)
+  expToNextLevel Int              @default(20) // Reduced for easier progression
+  totalExp       Int              @default(0)
+  lastFed        DateTime         @default(now())
+  userId         Int              @unique
+  user           User             @relation(fields: [userId], references: [id])
+  achievements   PetAchievement[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 }
 
-model QuestPet {
-  id Int @id  @default(autoincrement())
-  quest String
-  video String?
-  music String?
-  status StatusQuest @default(PENDING)
-  userId    Int      @unique
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model PetAchievement {
+  id         Int             @id @default(autoincrement())
+  type       AchievementType
+  unlockedAt DateTime        @default(now())
+  petId      Int
+  pet        Pet             @relation(fields: [petId], references: [id])
 }
 
-model StreakPet {
-  id Int @id  @default(autoincrement())
-  total Int
-  userId Int @unique
-  user      User     @relation(fields: [userId], references: [id])
-  status StatusStreak @default(INACTIVE)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model QuestTemplate {
+  id           Int             @id @default(autoincrement())
+  type         QuestType
+  difficulty   QuestDifficulty
+  expReward    Int
+  streakPoints Int
+  title        String
+  description  String          @db.Text
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 }
 
-model Reshub {
-  id Int @id  @default(autoincrement())
-  music String?
-  music_url String?
-  video String?
-  video_url String?
+model DailyQuest {
+  id           Int             @id @default(autoincrement())
+  type         QuestType
+  status       QuestStatus     @default(PENDING)
+  progress     Int             @default(0)
+  target       Int             @default(100)
+  difficulty   QuestDifficulty @default(EASY)
+  completedAt  DateTime?
+  userId       Int
+  user         User            @relation(fields: [userId], references: [id])
+  expReward    Int             @default(1) // Base reward, modified by difficulty
+  streakPoints Int             @default(1) // Points added to streak when completed
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model Streak {
+  id          Int      @id @default(autoincrement())
+  count       Int      @default(0)
+  maxCount    Int      @default(0)
+  lastCheckIn DateTime
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Mood {
+  id        Int      @id @default(autoincrement())
+  score     Int // Scale 1-5
+  note      String?  @db.Text
+  imageUrl  String? // For mood face tracking results
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  diary     Diary?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model Diary {
-  id Int @id  @default(autoincrement())
-  title String?
-  content String?
-  userId Int @unique
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  content    String   @db.Text
+  moodId     Int      @unique
+  mood       Mood     @relation(fields: [moodId], references: [id])
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  aiAnalysis String?  @db.Text
+  createdAt  DateTime @default(now())
+}
+
+model Questionnaire {
+  id              Int      @id @default(autoincrement())
+  answers         Json
+  mentalScore     Int? // AI-generated mental health score
+  recommendations Json? // AI-generated recommendations
+  userId          Int      @unique
+  user            User     @relation(fields: [userId], references: [id])
+  createdAt       DateTime @default(now())
+}
+
+model Resource {
+  id          Int          @id @default(autoincrement())
+  type        ResourceType
+  title       String
+  description String       @db.Text
+  url         String
+  duration    Int // In seconds
+  category    String
+  tags        String?
+  thumbnail   String?
+  createdAt   DateTime     @default(now())
+}
+
+model WhatsappLog {
+  id          Int      @id @default(autoincrement())
+  phoneNumber String
+  messageType String // mood_update, diary_entry, reminder
+  content     String   @db.Text
+  status      String // sent, delivered, read, failed
+  createdAt   DateTime @default(now())
 }
 
 enum Role {
@@ -115,14 +162,42 @@ enum Role {
   ADMIN
 }
 
-enum StatusQuest {
-  SUCCESS
-  PENDING
-  FAILED
-  EXPIRED
+enum QuestType {
+  BREATHING
+  MUSIC
+  VIDEO
 }
 
-enum StatusStreak {
-  ACTIVE
-  INACTIVE
+enum QuestStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum ResourceType {
+  MUSIC
+  VIDEO
+  GAME
+}
+
+enum AchievementType {
+  STREAK_7_DAYS
+  STREAK_30_DAYS
+  LEVEL_5
+  LEVEL_10
+  ALL_QUESTS_COMPLETE
+  MOOD_MASTER
+}
+
+enum PetStage {
+  EGG
+  BABY
+  TEEN
+  ADULT
+}
+
+enum QuestDifficulty {
+  EASY // 1 exp, 1 streak point
+  MEDIUM // 3 exp, 2 streak points
+  HARD // 5 exp, 3 streak points
 }

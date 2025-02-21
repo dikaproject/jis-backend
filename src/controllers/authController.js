@@ -12,13 +12,22 @@ const register = async (req, res) => {
                 email, 
                 password: hashedPassword, 
                 name,
-                role: "USER" // Set default role to USER
+                role: "USER",
+                profile: {
+                    create: {
+                        bio: null,
+                        age: null,
+                        gender: null,
+                        avatar: null
+                    }
+                }
             },
             select: {
                 id: true,
                 email: true,
                 name: true,
-                role: true
+                role: true,
+                profile: true
             }
         });
 

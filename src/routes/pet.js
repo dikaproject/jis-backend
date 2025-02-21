@@ -1,6 +1,9 @@
 const router = require('express').Router();
-const { Pet } = require('../controllers/PetController');
+const { createPet, getPet, updatePetName } = require('../controllers/PetController');
+const { auth } = require('../middleware/auth');
 
-router.get('/', Pet);
+router.post('/', auth, createPet);
+router.get('/my-pet', auth, getPet);
+router.patch('/name', auth, updatePetName);
 
 module.exports = router;
