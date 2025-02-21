@@ -3,10 +3,10 @@ const { checkStreakAchievements } = require('./AchievementController');
 
 const generateDailyQuests = async (req, res) => {
   try {
-    // Check if user already has active quests for today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Check for existing quests
     const existingQuests = await prisma.dailyQuest.findMany({
       where: {
         userId: req.user.id,
@@ -17,51 +17,48 @@ const generateDailyQuests = async (req, res) => {
     });
 
     if (existingQuests.length > 0) {
-      return res.status(200).json(existingQuests);
+      return res.status(200).json({
+        quests: existingQuests,
+        message: "Focus on completing these wellness activities for better mental health"
+      });
     }
 
-    // Get all active quest templates
+    // Get random wellness activities
     const questTemplates = await prisma.questTemplate.findMany({
-      where: {
-        isActive: true
-      }
+      where: { isActive: true }
     });
 
-    // Group templates by type
     const groupedTemplates = questTemplates.reduce((acc, template) => {
       if (!acc[template.type]) acc[template.type] = [];
       acc[template.type].push(template);
       return acc;
     }, {});
 
-    // Select one random quest of each type
     const selectedQuests = Object.values(groupedTemplates).map(templates => {
-      const randomIndex = Math.floor(Math.random() * templates.length);
-      return templates[randomIndex];
+      return templates[Math.floor(Math.random() * templates.length)];
     });
 
-    // Create daily quests for user
-    const dailyQuests = await prisma.dailyQuest.createMany({
+    await prisma.dailyQuest.createMany({
       data: selectedQuests.map(template => ({
         userId: req.user.id,
         type: template.type,
         title: template.title,
         description: template.description,
-        target: template.duration,
-        status: 'PENDING'
+        target: template.duration
       }))
     });
 
     const createdQuests = await prisma.dailyQuest.findMany({
       where: {
         userId: req.user.id,
-        createdAt: {
-          gte: today
-        }
+        createdAt: { gte: today }
       }
     });
 
-    res.status(201).json(createdQuests);
+    res.status(201).json({
+      quests: createdQuests,
+      message: "Take time for these self-care activities today"
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -71,7 +68,6 @@ const completeQuest = async (req, res) => {
   try {
     const { questId } = req.params;
     
-    // Complete the quest
     const quest = await prisma.dailyQuest.update({
       where: { id: parseInt(questId) },
       data: {
@@ -80,7 +76,6 @@ const completeQuest = async (req, res) => {
       }
     });
 
-    // Check if all daily quests are completed
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -88,21 +83,23 @@ const completeQuest = async (req, res) => {
       where: {
         userId: req.user.id,
         status: 'COMPLETED',
-        createdAt: {
-          gte: today
-        }
+        createdAt: { gte: today }
       }
     });
 
-    // If all quests completed, update streak
+    let response = {
+      quest,
+      message: "Great job taking care of your mental well-being!",
+      progress: `${completedQuests}/3 wellness activities completed`
+    };
+
+    // Update streak if all daily activities completed
     if (completedQuests === 3) {
       const streak = await prisma.streak.upsert({
         where: { userId: req.user.id },
         update: {
           count: { increment: 1 },
-          maxCount: {
-            increment: 1
-          },
+          maxCount: { increment: 1 },
           lastCheckIn: new Date()
         },
         create: {
@@ -113,21 +110,17 @@ const completeQuest = async (req, res) => {
         }
       });
 
-      // Check for new achievements
       const newAchievements = await checkStreakAchievements(req.user.id);
 
-      res.status(200).json({
-        quest,
-        streak,
-        dailyStatus: 'All quests completed!',
+      response = {
+        ...response,
+        streak: streak.count,
+        message: "Amazing! You've completed all your wellness activities for today!",
         newAchievements: newAchievements.length > 0 ? newAchievements : null
-      });
-    } else {
-      res.status(200).json({
-        quest,
-        dailyStatus: `${completedQuests}/3 quests completed`
-      });
+      };
     }
+
+    res.status(200).json(response);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

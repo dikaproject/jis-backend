@@ -7,6 +7,30 @@ const getStageFromStreak = (streakCount) => {
   return 'EGG';
 };
 
+const createPet = async (req, res) => {
+  try {
+    const existingPet = await prisma.pet.findUnique({
+      where: { userId: req.user.id }
+    });
+
+    if (existingPet) {
+      return res.status(400).json({ message: 'User already has a pet' });
+    }
+
+    const pet = await prisma.pet.create({
+      data: {
+        userId: req.user.id,
+        name: "SolvanaPet",
+        stage: "EGG"
+      }
+    });
+
+    res.status(201).json(pet);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const getPet = async (req, res) => {
   try {
     const pet = await prisma.pet.findUnique({
@@ -88,4 +112,4 @@ const updatePetName = async (req, res) => {
   }
 };
 
-module.exports = { getPet, updatePetName };
+module.exports = { getPet, updatePetName, createPet };

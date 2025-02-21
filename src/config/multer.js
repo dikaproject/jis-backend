@@ -2,7 +2,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure upload directories exist
+
 const createUploadDirs = () => {
   const dirs = ['uploads/music', 'uploads/video', 'uploads/thumbnails'];
   dirs.forEach(dir => {
@@ -14,7 +14,7 @@ const createUploadDirs = () => {
 
 createUploadDirs();
 
-// Configure storage
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const type = req.body.type?.toLowerCase() || 'other';
@@ -25,7 +25,7 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter
+
 const fileFilter = (req, file, cb) => {
   const type = req.body.type?.toUpperCase();
   
@@ -55,7 +55,7 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 50 * 1024 * 1024 // 50MB limit
+    fileSize: 50 * 1024 * 1024 
   }
 });
 

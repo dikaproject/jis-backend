@@ -26,7 +26,6 @@ const createResource = async (req, res) => {
     
     res.status(201).json(resource);
   } catch (error) {
-    // Delete uploaded file if database operation fails
     if (req.file) {
       await fs.unlink(req.file.path).catch(console.error);
     }
@@ -92,11 +91,9 @@ const updateResource = async (req, res) => {
     };
 
     if (file) {
-      // Delete old file
       const oldFilePath = path.join(process.cwd(), existingResource.url);
       await fs.unlink(oldFilePath).catch(console.error);
 
-      // Update with new file path
       updateData.url = `/uploads/${existingResource.type.toLowerCase()}/${file.filename}`;
       
       if (existingResource.type === 'VIDEO') {
@@ -130,17 +127,14 @@ const deleteResource = async (req, res) => {
       return res.status(404).json({ message: 'Resource not found' });
     }
 
-    // Delete file from storage
     const filePath = path.join(process.cwd(), resource.url);
     await fs.unlink(filePath).catch(console.error);
 
-    // Delete thumbnail if exists
     if (resource.thumbnail) {
       const thumbnailPath = path.join(process.cwd(), resource.thumbnail);
       await fs.unlink(thumbnailPath).catch(console.error);
     }
 
-    // Delete from database
     await prisma.resource.delete({
       where: { id: parseInt(id) }
     });

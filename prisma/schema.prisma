@@ -68,19 +68,17 @@ model QuestTemplate {
 }
 
 model DailyQuest {
-  id           Int             @id @default(autoincrement())
+  id           Int         @id @default(autoincrement())
   type         QuestType
-  status       QuestStatus     @default(PENDING)
-  progress     Int             @default(0)
-  target       Int             @default(100)
-  difficulty   QuestDifficulty @default(EASY)
+  title        String
+  description  String      @db.Text
+  status       QuestStatus @default(PENDING)
+  target       Int        // Duration in seconds
   completedAt  DateTime?
   userId       Int
-  user         User            @relation(fields: [userId], references: [id])
-  expReward    Int             @default(1) // Base reward, modified by difficulty
-  streakPoints Int             @default(1) // Points added to streak when completed
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  user         User       @relation(fields: [userId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
 
 model Streak {
@@ -96,9 +94,9 @@ model Streak {
 
 model Mood {
   id        Int      @id @default(autoincrement())
-  score     Int // Scale 1-5
+  type      MoodType 
   note      String?  @db.Text
-  imageUrl  String? // For mood face tracking results
+  imageUrl  String?
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
   diary     Diary?
@@ -162,7 +160,6 @@ enum QuestType {
 enum QuestStatus {
   PENDING
   COMPLETED
-  FAILED
 }
 
 enum ResourceType {
@@ -183,6 +180,13 @@ enum PetStage {
   BABY
   TEEN
   ADULT
+}
+
+enum MoodType {
+  HAPPY   
+  NEUTRAL  
+  SAD      
+  ANGRY    
 }
 
 enum QuestDifficulty {
