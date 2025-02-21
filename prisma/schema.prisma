@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int         @id @default(autoincrement())
+  name      String
+  email     String      @unique
+  password  String
+  role      Role        @default(USER)
+  profile   Profile?
+  questPet QuestPet?
+  streakPet StreakPet?
+  diary Diary?
+  pet Pet?
+  mentalData MentalData?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  
+}
+
+model MentalData {
+  id Int @id  @default(autoincrement())
+  mood String?
+  userId Int @unique
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Profile {
+  id        Int      @id @default(autoincrement())
+  bio       String?  @db.Text
+  avatar    String?
+  phoneNumber Int
+  age Int
+  wakeupTime String
+  sleepTime String
+  hobby String?
+  questionerData QuestionerData?
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model QuestionerData {
+  id        Int      @id @default(autoincrement())
+  activities String?
+  ProfileID Int @unique
+  Profile      Profile     @relation(fields: [ProfileID], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Pet {
+  id Int @id  @default(autoincrement())
+  name String?
+  moodPet String?
+  userId Int @unique
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model QuestPet {
+  id Int @id  @default(autoincrement())
+  quest String
+  video String?
+  music String?
+  status StatusQuest @default(PENDING)
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StreakPet {
+  id Int @id  @default(autoincrement())
+  total Int
+  userId Int @unique
+  user      User     @relation(fields: [userId], references: [id])
+  status StatusStreak @default(INACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Reshub {
+  id Int @id  @default(autoincrement())
+  music String?
+  music_url String?
+  video String?
+  video_url String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Diary {
+  id Int @id  @default(autoincrement())
+  title String?
+  content String?
+  userId Int @unique
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum StatusQuest {
+  SUCCESS
+  PENDING
+  FAILED
+  EXPIRED
+}
+
+enum StatusStreak {
+  ACTIVE
+  INACTIVE
+}
