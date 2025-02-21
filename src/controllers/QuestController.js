@@ -1,53 +1,77 @@
 const prisma = require('../config/database');
+const { checkStreakAchievements } = require('./AchievementController');
 
-// Generate daily quests
 const generateDailyQuests = async (req, res) => {
   try {
-    // Delete previous uncompleted quests
-    await prisma.dailyQuest.deleteMany({
+    // Check if user already has active quests for today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const existingQuests = await prisma.dailyQuest.findMany({
       where: {
         userId: req.user.id,
-        status: 'PENDING'
+        createdAt: {
+          gte: today
+        }
       }
     });
 
-    // Get active quest templates
+    if (existingQuests.length > 0) {
+      return res.status(200).json(existingQuests);
+    }
+
+    // Get all active quest templates
     const questTemplates = await prisma.questTemplate.findMany({
       where: {
         isActive: true
-      },
-      orderBy: {
-        difficulty: 'asc'
-      },
-      take: 3 // Limit to 3 quests per day
+      }
     });
 
-    // Create new quests from templates
-    const quests = await Promise.all(questTemplates.map(template => 
-      prisma.dailyQuest.create({
-        data: {
-          type: template.type,
-          difficulty: template.difficulty,
-          userId: req.user.id,
-          expReward: template.expReward,
-          streakPoints: template.streakPoints,
-          title: template.title,
-          description: template.description
-        }
-      })
-    ));
+    // Group templates by type
+    const groupedTemplates = questTemplates.reduce((acc, template) => {
+      if (!acc[template.type]) acc[template.type] = [];
+      acc[template.type].push(template);
+      return acc;
+    }, {});
 
-    res.status(201).json(quests);
+    // Select one random quest of each type
+    const selectedQuests = Object.values(groupedTemplates).map(templates => {
+      const randomIndex = Math.floor(Math.random() * templates.length);
+      return templates[randomIndex];
+    });
+
+    // Create daily quests for user
+    const dailyQuests = await prisma.dailyQuest.createMany({
+      data: selectedQuests.map(template => ({
+        userId: req.user.id,
+        type: template.type,
+        title: template.title,
+        description: template.description,
+        target: template.duration,
+        status: 'PENDING'
+      }))
+    });
+
+    const createdQuests = await prisma.dailyQuest.findMany({
+      where: {
+        userId: req.user.id,
+        createdAt: {
+          gte: today
+        }
+      }
+    });
+
+    res.status(201).json(createdQuests);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Complete a quest
 const completeQuest = async (req, res) => {
   try {
     const { questId } = req.params;
     
+    // Complete the quest
     const quest = await prisma.dailyQuest.update({
       where: { id: parseInt(questId) },
       data: {
@@ -56,56 +80,54 @@ const completeQuest = async (req, res) => {
       }
     });
 
-    // Update pet exp and level
-    const pet = await prisma.pet.findUnique({
-      where: { userId: req.user.id }
-    });
+    // Check if all daily quests are completed
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    let newExp = pet.exp + quest.expReward;
-    let newLevel = pet.level;
-    let newStage = pet.stage;
-
-    // Level up logic
-    while (newExp >= pet.expToNextLevel) {
-      newExp -= pet.expToNextLevel;
-      newLevel++;
-      
-      // Update stage based on level
-      if (newLevel === 6) newStage = 'BABY';
-      else if (newLevel === 16) newStage = 'TEEN';
-      else if (newLevel === 26) newStage = 'ADULT';
-    }
-
-    // Update pet
-    const updatedPet = await prisma.pet.update({
-      where: { userId: req.user.id },
-      data: {
-        exp: newExp,
-        level: newLevel,
-        stage: newStage,
-        totalExp: { increment: quest.expReward },
-        happiness: { increment: 5 }
-      }
-    });
-
-    // Update streak
-    await prisma.streak.upsert({
-      where: { userId: req.user.id },
-      update: {
-        count: { increment: quest.streakPoints },
-        lastCheckIn: new Date()
-      },
-      create: {
+    const completedQuests = await prisma.dailyQuest.count({
+      where: {
         userId: req.user.id,
-        count: quest.streakPoints,
-        lastCheckIn: new Date()
+        status: 'COMPLETED',
+        createdAt: {
+          gte: today
+        }
       }
     });
 
-    res.status(200).json({
-      quest,
-      pet: updatedPet
-    });
+    // If all quests completed, update streak
+    if (completedQuests === 3) {
+      const streak = await prisma.streak.upsert({
+        where: { userId: req.user.id },
+        update: {
+          count: { increment: 1 },
+          maxCount: {
+            increment: 1
+          },
+          lastCheckIn: new Date()
+        },
+        create: {
+          userId: req.user.id,
+          count: 1,
+          maxCount: 1,
+          lastCheckIn: new Date()
+        }
+      });
+
+      // Check for new achievements
+      const newAchievements = await checkStreakAchievements(req.user.id);
+
+      res.status(200).json({
+        quest,
+        streak,
+        dailyStatus: 'All quests completed!',
+        newAchievements: newAchievements.length > 0 ? newAchievements : null
+      });
+    } else {
+      res.status(200).json({
+        quest,
+        dailyStatus: `${completedQuests}/3 quests completed`
+      });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

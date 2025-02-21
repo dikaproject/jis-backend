@@ -2,16 +2,14 @@ const prisma = require('../../config/database');
 
 const createQuest = async (req, res) => {
   try {
-    const { type, difficulty, expReward, streakPoints, title, description } = req.body;
+    const { type, title, description, duration } = req.body;
     
     const quest = await prisma.questTemplate.create({
       data: {
         type,
-        difficulty,
-        expReward,
-        streakPoints,
         title,
         description,
+        duration,
         isActive: true
       }
     });
@@ -39,18 +37,16 @@ const getAllQuests = async (req, res) => {
 const updateQuest = async (req, res) => {
   try {
     const { id } = req.params;
-    const { type, difficulty, expReward, streakPoints, title, description, isActive } = req.body;
+    const {  type, title, description, duration } = req.body;
     
     const quest = await prisma.questTemplate.update({
       where: { id: parseInt(id) },
       data: {
         type,
-        difficulty,
-        expReward,
-        streakPoints,
         title,
         description,
-        isActive
+        duration,
+        isActive: true
       }
     });
     

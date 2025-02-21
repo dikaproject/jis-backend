@@ -38,39 +38,30 @@ model Profile {
 }
 
 model Pet {
-  id             Int              @id @default(autoincrement())
-  name           String           @default("SolvanaPet")
-  stage          PetStage         @default(EGG)
-  happiness      Int              @default(50)
-  energy         Int              @default(100)
-  level          Int              @default(1)
-  exp            Int              @default(0)
-  expToNextLevel Int              @default(20) // Reduced for easier progression
-  totalExp       Int              @default(0)
-  lastFed        DateTime         @default(now())
-  userId         Int              @unique
-  user           User             @relation(fields: [userId], references: [id])
-  achievements   PetAchievement[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id            Int              @id @default(autoincrement())
+  name          String          @default("SolvanaPet")
+  stage         PetStage        @default(EGG)
+  userId        Int             @unique
+  user          User            @relation(fields: [userId], references: [id])
+  achievements  PetAchievement[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
 model PetAchievement {
-  id         Int             @id @default(autoincrement())
+  id         Int            @id @default(autoincrement())
   type       AchievementType
-  unlockedAt DateTime        @default(now())
+  unlockedAt DateTime       @default(now())
   petId      Int
-  pet        Pet             @relation(fields: [petId], references: [id])
+  pet        Pet           @relation(fields: [petId], references: [id])
 }
 
 model QuestTemplate {
   id           Int             @id @default(autoincrement())
   type         QuestType
-  difficulty   QuestDifficulty
-  expReward    Int
-  streakPoints Int
   title        String
   description  String          @db.Text
+  duration     Int            // Duration in seconds
   isActive     Boolean         @default(true)
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
@@ -181,12 +172,10 @@ enum ResourceType {
 }
 
 enum AchievementType {
-  STREAK_7_DAYS
+  STREAK_10_DAYS
   STREAK_30_DAYS
-  LEVEL_5
-  LEVEL_10
-  ALL_QUESTS_COMPLETE
-  MOOD_MASTER
+  STREAK_100_DAYS
+  STREAK_200_DAYS
 }
 
 enum PetStage {
