@@ -40,9 +40,13 @@ prisma/*.db
 .vercel
 .netlify
 
+
 # Testing
 /coverage
 
 # Misc
 .tmp
 .temp
+
+#frontend folder
+fe-solvana

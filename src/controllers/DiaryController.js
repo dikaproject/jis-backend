@@ -5,14 +5,12 @@ const createDiary = async (req, res) => {
   try {
     const { content, moodType, moodNote } = req.body;
 
-    // Validate content
     if (!content || content.trim().length < 10) {
       return res.status(400).json({
         message: "Please write at least 10 characters in your diary"
       });
     }
 
-    // Create mood first
     const mood = await prisma.mood.create({
       data: {
         userId: req.user.id,
@@ -21,7 +19,6 @@ const createDiary = async (req, res) => {
       }
     });
 
-    // Create diary entry
     const diary = await prisma.diary.create({
       data: {
         content,
@@ -30,7 +27,6 @@ const createDiary = async (req, res) => {
       }
     });
 
-    // Get supportive response based on mood
     const supportiveMessage = getSupportiveMessage(moodType, content);
 
     res.status(201).json({

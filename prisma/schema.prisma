@@ -15,12 +15,14 @@ model User {
   role           Role           @default(USER)
   profile        Profile?
   pet            Pet?
+  aichat        AIChat[]
   dailyQuests    DailyQuest[]
   streaks        Streak[]
   moods          Mood[]
   diaries        Diary[]
   questionnaire  Questionnaire?
   whatsappNumber String?
+  imageAnalysisUsages ImageAnalysisUsage[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 }
@@ -61,24 +63,25 @@ model QuestTemplate {
   type         QuestType
   title        String
   description  String          @db.Text
-  duration     Int            // Duration in seconds
+  duration     Int            
+  url          String?        
   isActive     Boolean         @default(true)
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 }
 
 model DailyQuest {
-  id           Int         @id @default(autoincrement())
-  type         QuestType
-  title        String
-  description  String      @db.Text
-  status       QuestStatus @default(PENDING)
-  target       Int        // Duration in seconds
-  completedAt  DateTime?
-  userId       Int
-  user         User       @relation(fields: [userId], references: [id])
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id          Int          @id @default(autoincrement())
+  userId      Int
+  type        QuestType
+  title       String
+  description String       @db.Text
+  target      Int
+  url         String? 
+  status      QuestStatus  @default(PENDING)
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  user        User         @relation(fields: [userId], references: [id])    
 }
 
 model Streak {
@@ -130,7 +133,7 @@ model Resource {
   title       String
   description String       @db.Text
   url         String
-  duration    Int // In seconds
+  duration    Int 
   category    String
   tags        String?
   thumbnail   String?
@@ -140,10 +143,29 @@ model Resource {
 model WhatsappLog {
   id          Int      @id @default(autoincrement())
   phoneNumber String
-  messageType String // mood_update, diary_entry, reminder
+  messageType String 
   content     String   @db.Text
-  status      String // sent, delivered, read, failed
+  status      String 
   createdAt   DateTime @default(now())
+}
+
+model AIChat {
+    id        Int      @id @default(autoincrement())
+    userId    Int
+    user      User     @relation(fields: [userId], references: [id])
+    role      String   
+    content   String   @db.Text
+    language  String
+    createdAt DateTime @default(now())
+}
+
+model ImageAnalysisUsage {
+    id        Int      @id @default(autoincrement())
+    userId    Int
+    timestamp DateTime @default(now())
+    user      User     @relation(fields: [userId], references: [id])
+
+    @@index([userId, timestamp])
 }
 
 enum Role {
@@ -190,7 +212,7 @@ enum MoodType {
 }
 
 enum QuestDifficulty {
-  EASY // 1 exp, 1 streak point
-  MEDIUM // 3 exp, 2 streak points
-  HARD // 5 exp, 3 streak points
+  EASY 
+  MEDIUM 
+  HARD 
 }

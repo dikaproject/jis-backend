@@ -1,15 +1,12 @@
-const express = require('express');
-const router = express.Router();
-const { analyzeMood } = require('../controllers/imageaiController');
-const upload = require('../config/multer');
-const { auth } = require('../middleware/auth');
+const router = require('express').Router();
+const { analyzeMood, analyzeRateLimit, checkUsage } = require('../controllers/imageaiController');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 
+// Analyze image with rate limiting
+router.post('/analyze', analyzeRateLimit, upload.single('image'), analyzeMood);
 
-const fs = require('fs');
-if (!fs.existsSync('uploads')) {
-    fs.mkdirSync('uploads');
-}
-
-router.post('/analyze-mood', auth, upload.single('image'), analyzeMood);
+// Check remaining analyses
+router.get('/usage/:userId', checkUsage);
 
 module.exports = router;

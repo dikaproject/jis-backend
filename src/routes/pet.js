@@ -3,7 +3,7 @@ const { createPet, getPet, updatePetName } = require('../controllers/PetControll
 const { auth } = require('../middleware/auth');
 
 router.post('/', auth, createPet);
-router.get('/my-pet', auth, getPet);
+router.get('/', auth, getPet);  // Changed from '/my-pet' to '/'
 router.patch('/name', auth, updatePetName);
 
 module.exports = router;
