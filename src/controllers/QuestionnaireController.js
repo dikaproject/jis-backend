@@ -125,12 +125,6 @@ const submitQuestionnaire = async (req, res) => {
         userId,
         name: "SolvanaPet",
         stage: "EGG",
-        happiness: 50,
-        energy: 100,
-        level: 1,
-        exp: 0,
-        expToNextLevel: 20,
-        totalExp: 0
       }
     });
 
@@ -151,7 +145,6 @@ const submitQuestionnaire = async (req, res) => {
       pet: {
         name: "SolvanaPet",
         stage: "EGG",
-        level: 1
       }
     });
   } catch (error) {

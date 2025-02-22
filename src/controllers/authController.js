@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 
 const register = async (req, res) => {
     try {
-        const { email, password, name } = req.body;
+        const { email, password, name, whatsappNumber } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await prisma.user.create({
@@ -12,6 +12,7 @@ const register = async (req, res) => {
                 email, 
                 password: hashedPassword, 
                 name,
+                whatsappNumber,
                 role: "USER",
                 profile: {
                     create: {
@@ -26,6 +27,7 @@ const register = async (req, res) => {
                 id: true,
                 email: true,
                 name: true,
+                whatsappNumber: true,
                 role: true,
                 profile: true
             }

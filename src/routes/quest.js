@@ -1,8 +1,8 @@
 const router = require('express').Router();
-const { generateDailyQuests, completeQuest } = require('../controllers/QuestController');
+const { getDailyQuests, completeQuest } = require('../controllers/QuestController');
 const { auth } = require('../middleware/auth');
 
-router.post('/generate', auth, generateDailyQuests);
-router.post('/:questId/complete', auth, completeQuest);
+router.get('/daily', auth, getDailyQuests);
+router.post('/complete/:questNumber', auth, completeQuest);
 
 module.exports = router;

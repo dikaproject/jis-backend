@@ -40,14 +40,16 @@ model Profile {
 }
 
 model Pet {
-  id            Int              @id @default(autoincrement())
-  name          String          @default("SolvanaPet")
-  stage         PetStage        @default(EGG)
-  userId        Int             @unique
-  user          User            @relation(fields: [userId], references: [id])
-  achievements  PetAchievement[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id        Int       @id @default(autoincrement())
+  name      String    @default("SolvanaPet")
+  stage     PetStage  @default(EGG)
+  userId    Int       @unique
+  petachievements PetAchievement[]
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId])
 }
 
 model PetAchievement {
@@ -58,41 +60,28 @@ model PetAchievement {
   pet        Pet           @relation(fields: [petId], references: [id])
 }
 
-model QuestTemplate {
-  id           Int             @id @default(autoincrement())
-  type         QuestType
-  title        String
-  description  String          @db.Text
-  duration     Int            
-  url          String?        
-  isActive     Boolean         @default(true)
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-}
-
 model DailyQuest {
-  id          Int          @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   userId      Int
-  type        QuestType
-  title       String
-  description String       @db.Text
-  target      Int
-  url         String? 
-  status      QuestStatus  @default(PENDING)
+  questNumber Int        // 1: Breathing, 2: Music, 3: Video
+  status      QuestStatus @default(PENDING)
   completedAt DateTime?
-  createdAt   DateTime     @default(now())
-  user        User         @relation(fields: [userId], references: [id])    
+  createdAt   DateTime   @default(now())
+  user        User       @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([userId, questNumber, createdAt])
 }
 
 model Streak {
-  id          Int      @id @default(autoincrement())
-  count       Int      @default(0)
-  maxCount    Int      @default(0)
-  lastCheckIn DateTime
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  count        Int      @default(0)
+  lastCheckIn  DateTime
+  userId       Int      @unique
+  user         User     @relation(fields: [userId], references: [id])
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Mood {
@@ -173,11 +162,6 @@ enum Role {
   ADMIN
 }
 
-enum QuestType {
-  BREATHING
-  MUSIC
-  VIDEO
-}
 
 enum QuestStatus {
   PENDING
@@ -209,10 +193,4 @@ enum MoodType {
   NEUTRAL  
   SAD      
   ANGRY    
-}
-
-enum QuestDifficulty {
-  EASY 
-  MEDIUM 
-  HARD 
 }
